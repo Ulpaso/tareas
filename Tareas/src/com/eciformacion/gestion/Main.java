@@ -25,7 +25,7 @@ public class Main {
 		Connection conn = null;
 		try {
 		conn=DriverManager.getConnection("jdbc:mysql://localhost/tareas", "root", "");
-		try {
+		/*try {
 			Statement st = conn.createStatement();
 			ResultSet rs = st.executeQuery("SELECT * FROM tareas");
 			while(rs.next()) {
@@ -36,12 +36,12 @@ public class Main {
 		}
 		tarea.stream().forEach(p -> {
 			System.out.println(p.getIDAI()+" => "+p.getNombre());
-		});
+		});*/
 		
 
 		GestorTarea gt = new GestorTarea(conn);
 		try {
-		System.out.println(gt.buscarTareaId(1).getIDAI()+" "+gt.buscarTareaId(1).getNombre());
+		System.out.println(gt.buscarTareaId(8).getIDAI()+" "+gt.buscarTareaId(8).getNombre()+" "+gt.buscarTareaId(8).getDetalles().toString());
 		
 		gt.buscarTareaNombre("cocinar").stream().forEach(p -> {
 			System.out.println(p.getIDAI());
@@ -53,8 +53,11 @@ public class Main {
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
+		gt.crearTarea("elena");
+		//gt.añadirDetalle(13, "DominarElMundoMAS", false);
+		//gt.completarDetalle(14);
 		//Tareas t = new Tareas(4, conn);
-		
+		System.out.println(gt.buscarDetalle(14).toString());
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {

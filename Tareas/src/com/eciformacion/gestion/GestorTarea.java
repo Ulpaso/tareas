@@ -17,9 +17,49 @@ public class GestorTarea {
 		this.conn = conn;
 	}
 	public Tareas buscarTareaId(int id) throws NoSeEncuentraTareaException {
-		Tareas tarea = new Tareas(id, this.conn);
-		if(tarea.getNombre() == null) throw new NoSeEncuentraTareaException("No hay la tarea con id "+id);
-		return tarea; 
+		PreparedStatement ps = null;
+		Tareas t = null;
+		int idai = 0;
+		String nombre = null;
+		ArrayList<Detalle> d = new ArrayList<>();
+		try {
+			ps = this.conn.prepareStatement("SELECT * FROM tareas WHERE idai=?");
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			while(rs.next()) {
+				idai = rs.getInt(1);
+				nombre = rs.getString(2);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			try{
+			ps.close();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		try {
+			ps = this.conn.prepareStatement("SELECT * FROM detalle WHERE idtarea=?");
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			while(rs.next()) {
+				d.add(new Detalle(rs.getInt(1), rs.getInt(2), rs.getString(3), rs.getBoolean(4)));
+				//System.out.println("check "+rs.getInt(1)+" "+rs.getInt(2)+" "+rs.getString(3)+" "+rs.getBoolean(4));
+			}
+			rs.close();
+		}catch(Exception e) {
+				
+			}finally {
+				try {
+					ps.close();
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		t = new Tareas(idai,nombre, d );
+		if(t.getNombre() == null) throw new NoSeEncuentraTareaException("No hay la tarea con id "+id);
+		return t; 
 	}
 	public ArrayList<Tareas> buscarTareaNombre(String string) throws NoSeEncuentraTareaException {
 		ArrayList<Tareas> tareas = new ArrayList<>();
@@ -29,7 +69,16 @@ public class GestorTarea {
 			ps.setString(1, string);
 			ResultSet rs = ps.executeQuery();
 			while(rs.next()) {
-				tareas.add(new Tareas(rs.getInt(1), conn)); 
+				ArrayList<Detalle> detalle = new ArrayList<>();
+				//System.out.println(rs.getInt(1)+" //"+rs.getString(2));
+				PreparedStatement ps2 = this.conn.prepareStatement("SELECT * FROM detalle WHERE idtarea=?");
+				ps2.setInt(1, rs.getInt(1));
+				ResultSet rs2 = ps2.executeQuery();
+				while(rs2.next()) {
+					//System.out.println(rs2.getInt(1)+" "+rs2.getInt(2)+" "+rs2.getString(3)+" "+rs2.getBoolean(4));
+					detalle.add(new Detalle(rs2.getInt(1), rs2.getInt(2), rs2.getString(3), rs2.getBoolean(4)));
+				}
+				tareas.add(new Tareas(rs.getInt(1), rs.getString(2), detalle )); 
 			}
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -44,7 +93,22 @@ public class GestorTarea {
 		return tareas;
 	}
 	public void crearTarea(String nombre) {
-		new Tareas(nombre, this.conn);
+		PreparedStatement ps= null;
+		int idai;
+		try {
+			ps =conn.prepareStatement("INSERT INTO tareas values(null,?)");
+			ps.setString(1, nombre);
+			ps.executeUpdate();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				ps.close();
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 	public void actualizarTarea(int id, String update) {
 		PreparedStatement ps= null;
@@ -64,15 +128,22 @@ public class GestorTarea {
 		}
 	}
 	public void añadirDetalle(int idTarea, String nombre, boolean realizado) {
+		PreparedStatement ps= null;
 		try {
-			Tareas t = this.buscarTareaId(idTarea);
-			t.añadirDetalle(nombre, realizado);
-		} catch (NoSeEncuentraTareaException e) {
-			// TODO Auto-generated catch block
+			ps =conn.prepareStatement("INSERT INTO detalle values(null,?,?,?)");
+			ps.setInt(1, idTarea);
+			ps.setString(2, nombre);
+			ps.setBoolean(3, realizado);
+			ps.executeUpdate();
+		}catch (Exception e) {
 			e.printStackTrace();
+		}finally {
+			try {
+				ps.close();
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
-		
-		
 	}
 	public void leerTarea(int id) {
 		 try {
@@ -89,11 +160,34 @@ public class GestorTarea {
 		 
 	}
 	public void completarDetalle(int id) {
-		Detalle d = buscarDetalle(id);
-		d.setRealizado(true);
+		PreparedStatement ps= null;
+		try {
+			ps = this.conn.prepareStatement("UPDATE detalle SET realizado=? WHERE idai=?");
+			ps.setBoolean(1, true);
+			ps.setInt(2, id);
+			ps.executeUpdate();
+		}catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				ps.close();
+			}catch (Exception e) {
+				
+			}
+		}
 	}
 	public Detalle buscarDetalle(int id) {
-		Detalle d = new Detalle(id, conn);
+		Detalle d = null;
+		try {
+			PreparedStatement ps = this.conn.prepareStatement("SELECT * FROM detalle WHERE idai=?");
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			while(rs.next()) {
+				d = new Detalle(rs.getInt(1), rs.getInt(2), rs.getString(3), rs.getBoolean(4));
+			}
+		}catch(Exception e) {
+				
+			}
 		return d;
 	}
 	public Connection getConn() {
